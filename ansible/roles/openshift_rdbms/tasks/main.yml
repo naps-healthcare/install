@@ -1,0 +1,11 @@
+---
+
+# - name: check if rdbms is deployed
+#  k8s:
+#    state: list
+#    oc_binary: "{{ openshift_cli }}"
+#    name: "{{ rdbms_app_name }}"
+#    namespace: "{{ ocp_project }}"
+#    kind: dc
+#  register: psql_result
+

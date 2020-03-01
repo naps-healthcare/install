@@ -1,0 +1,27 @@
+---
+
+home_dir: "{{ playbook_dir }}/.."
+
+# resources dir
+resources_base_dir: "{{ home_dir }}/resources"
+
+app_name: naps-healthcare
+
+openshift_cli: oc
+cluster_admin_user: opentlc-mgr
+work_dir: "/tmp/{{ app_name }}"
+
+replica_status: '\{\{.status.readyReplicas\}\}'
+
+user_prefix: user
+rdbms_app_name_base: postgresql
+
+seq_start: 1
+seq_end: 1
+
+install_rdbms: True
+install_patient_service: True
+install_optaweb_employee_rostering: True
+
+use_cluster_quota: False
+

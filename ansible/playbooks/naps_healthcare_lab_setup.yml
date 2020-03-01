@@ -1,0 +1,29 @@
+- hosts: all
+  become: false
+  gather_facts: False
+  run_once: true
+  vars_files:
+  tasks:
+    - set_fact:
+        uninstall_delete_project: True
+        user_sequence: "{{ range((seq_start|int), (seq_end|int) + 1) | list }}"
+    - include_role:
+        name: ../roles/openshift_install
+      vars:
+        ocp_user: "{{ user_prefix }}{{ item }}"
+      when: >
+        ACTION is not defined or
+        ACTION is none or
+        ACTION|trim() == "" or
+        ACTION|trim() == "install"
+      loop: "{{ user_sequence }}"
+    - include_role:
+        name: ../roles/openshift_install
+        tasks_from: uninstall
+      vars:
+        ocp_user: "{{ 'user%x'|format(item) }}"
+      when: >
+        ACTION is defined and
+        ACTION|trim() == "uninstall"
+      loop: "{{ user_sequence }}"
+

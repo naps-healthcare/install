@@ -2,4 +2,36 @@
 
 :numbered:
 
-== Overview
+== Purpose
+
+== Procedure
+
+. Ensure you are authenticated into the OCP4 lab environment as a cluster-admin
+. Clone this repository and execute:
++
+-----
+cd ansible
+
+export api_mgmt_subdomain_base=$(oc whoami --show-console | cut -d'.' -f 3-)                        # subdomain base where 3scale API gateways reside.
+                                                                                                    # most likely will be the same cluster that ER-Demo is on
+                                                                                                    # ie: cluster-168d.168d.example.opentlc.com
+
+export create_incident_service_api_resources=true                                                   # Please see comments in playbooks/group_vars/all/vars.yml
+
+seq_start=1
+seq_end=1
+
+$ ansible-playbook -i localhost, -c local playbooks/naps_healthcare_lab_setup.yml \
+    -e "seq_start=$seq_start" \
+    -e "seq_end=$seq_end"
+-----
+
+
+. Uninstall:
++
+-----
+cd ansible
+
+ansible-playbook -i localhost, -c local playbooks/naps_healthcare_lab_setup.yml \
+       -e "ACTION=uninstall"
+-----

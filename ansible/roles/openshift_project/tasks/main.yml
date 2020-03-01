@@ -1,0 +1,18 @@
+---
+
+- name: "copy and filter openshift resource resources/openshift/project.yml "
+  template:
+    src: "{{ resources_base_dir }}/openshift/project.yml"
+    dest: "{{ work_dir }}/project.yml"
+
+- name: create project {{ ocp_project }}
+  k8s:
+    state: present
+    src: "{{ work_dir }}/project.yml"
+
+- name: assign user {{ ocp_user }} as project admin in {{ ocp_project }}
+  shell:  "oc adm policy add-role-to-user admin {{ ocp_user }} -n {{ ocp_project }}"
+  when: >
+    ocp_user is defined and
+    ocp_user is not none and
+    ocp_user|trim() != ""

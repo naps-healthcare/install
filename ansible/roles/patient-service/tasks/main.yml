@@ -1,0 +1,12 @@
+---
+
+- name: "Copy all {{ service_name }} related resources"
+  template:
+    src: "{{ resources_dir }}/{{ cp_file }}"
+    dest: "{{ work_dir }}/{{ cp_file }}"
+  loop:
+    - application.properties
+    - patient-service-imagestream.yml
+    - patient-service.yml
+  loop_control:
+    loop_var: cp_file

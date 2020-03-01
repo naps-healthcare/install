@@ -1,0 +1,40 @@
+---
+
+- name: Prepare for uninstall
+  set_fact:
+    ocp_project: "{{ app_name }}-{{ ocp_user }}"
+    ocp_project_display_name: "{{ app_name }}-{{ ocp_user }}"
+    ocp_project_desc: "{{ app_name }}-{{ ocp_user }}"
+- template:
+    src: "{{ resources_base_dir }}/openshift/project.yml"
+    dest: "{{ work_dir }}/project.yml"
+
+- name: uninstall Core API components
+  shell: |
+       oc delete all --all -n {{ ocp_project }}
+  
+- name: uninstall PVCs
+  shell: |
+       oc delete pvc --all -n {{ ocp_project }}
+
+- name: uninstall quota
+  import_role:
+    name: openshift_quota
+    tasks_from: uninstall
+
+- name: "Delete project {{ ocp_project }}"
+  k8s:
+    state: absent
+    src: "{{ work_dir }}/project.yml"
+
+
+- name: "Wait until the following project is terminated {{ ocp_project }}"
+  k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ ocp_project }}"
+  register: r_project
+  retries: 10
+  delay: 10
+  ignore_errors: yes
+  until: r_project.resources | list | length < 1

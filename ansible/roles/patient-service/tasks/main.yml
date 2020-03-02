@@ -8,48 +8,92 @@
 
 
 # ###### Patient Service RDBMS      ################
-- name: "Install {{ rdbms_init_configmap }}"
-  shell: |
-       oc create configmap {{ rdbms_init_configmap }} -n {{ ocp_project }} --from-file={{ resources_dir }}/{{ rdbms_app_name_base }}/sql
-  ignore_errors: true
 
-- set_fact:
-    rdbms_template: "{{ rdbms_app_name_base }}_ephemeral.yaml"
-  when: use_ephemeral_rdbms|bool
-
-- name: "Copy {{ rdbms_template }}"
-  template:
-    src: "{{ resources_dir }}/{{ rdbms_app_name_base }}/{{ rdbms_template }}"
-    dest: "{{ work_dir }}/{{ rdbms_template }}"
-
-- name: "Install {{ rdbms_template }}"
-  k8s:
-    state: present
+- k8s_info:
+    kind: Pod
+    label_selectors:
+      - app = {{ app_name }}
+      - name = {{ rdbms_app_name }}
     namespace: "{{ ocp_project }}"
-    src: "{{ work_dir }}/{{ rdbms_template }}"
+  register: rdbms_pod
+#- debug:
+#    msg: "rdbms_pod = {{ rdbms_pod }}"
 
-- name: wait for rdbms to be ready
-  shell: "{{ openshift_cli }} get dc {{ rdbms_app_name }} -o template --template={{ json_template }} -n {{ ocp_project }}"
-  vars:
-    json_template: '\{\{.status.readyReplicas\}\}'
-  register: result
-  until: result.stdout == "1"
-  retries: 10
-  delay: 30
-  changed_when: false
+- block:
+  - name: "Install {{ rdbms_init_configmap }}"
+    shell: |
+         oc create configmap {{ rdbms_init_configmap }} -n {{ ocp_project }} --from-file={{ resources_dir }}/{{ rdbms_app_name_base }}/sql
+    ignore_errors: true
+  
+  - set_fact:
+      rdbms_template: "{{ rdbms_app_name_base }}_ephemeral.yaml"
+    when: use_ephemeral_rdbms|bool
+  
+  - name: "Copy {{ rdbms_template }}"
+    template:
+      src: "{{ resources_dir }}/{{ rdbms_app_name_base }}/{{ rdbms_template }}"
+      dest: "{{ work_dir }}/{{ rdbms_template }}"
+  
+  - name: "Install {{ rdbms_template }}"
+    k8s:
+      state: present
+      namespace: "{{ ocp_project }}"
+      src: "{{ work_dir }}/{{ rdbms_template }}"
+  
+  - name: wait for rdbms to be ready
+    shell: "{{ openshift_cli }} get dc {{ rdbms_app_name }} -o template --template={{ json_template }} -n {{ ocp_project }}"
+    vars:
+      json_template: '\{\{.status.readyReplicas\}\}'
+    register: result
+    until: result.stdout == "1"
+    retries: 10
+    delay: 30
+    changed_when: false
+
+  when: rdbms_pod is not defined or rdbms_pod is none or rdbms_pod.resources|length < 1
 
 ##############################################
 
  
 # #########     Patient Service     ######## #
-- name: "Copy all {{ service_name }} related resources"
-  template:
-    src: "{{ resources_dir }}/{{ cp_file }}"
-    dest: "{{ work_dir }}/{{ cp_file }}"
-  loop:
-    - application.properties
-    - patient-service-imagestream.yml
-    - patient-service.yml
-  loop_control:
-    loop_var: cp_file
+- k8s_info:
+    kind: Pod
+    label_selectors:
+      - app = {{ app_name }}
+      - name = {{ service_name }}
+    namespace: "{{ ocp_project }}"
+  register: p_pod
+- debug:
+    msg: "p_pod = {{ p_pod }}"
+
+- block:
+  - name: "Copy all {{ service_name }} related resources"
+    template:
+      src: "{{ resources_dir }}/{{ cp_file }}"
+      dest: "{{ work_dir }}/{{ cp_file }}"
+    loop:
+      - application.properties
+      - patient-service.yml
+    loop_control:
+      loop_var: cp_file
+  - name: "Create configmap {{ service_name }}"
+    shell: |
+         oc create configmap {{ service_name }} --from-file={{ work_dir }}/application.properties
+    ignore_errors: true
+  - name: "Install patient-service.yml"
+    k8s:
+      state: present
+      namespace: "{{ ocp_project }}"
+      src: "{{ work_dir }}/patient-service.yml"
+  - name: wait for patient-service to be ready
+    shell: "{{ openshift_cli }} get dc {{ service_name }} -o template --template={{ json_template }} -n {{ ocp_project }}"
+    vars:
+      json_template: '\{\{.status.readyReplicas\}\}'
+    register: result
+    until: result.stdout == "1"
+    retries: 10
+    delay: 30
+    changed_when: false
+
+  when: p_pod is not defined or p_pod is none or p_pod.resources|length < 1
 ##############################################

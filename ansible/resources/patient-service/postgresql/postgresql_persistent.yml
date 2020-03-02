@@ -42,6 +42,19 @@ items:
       requests:
         storage: {{ postgresql_pv_capacity }}
 
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    annotations:
+      template.openshift.io/expose-database_name: '{.data[''database-name'']}'
+      template.openshift.io/expose-password: '{.data[''database-password'']}'
+      template.openshift.io/expose-username: '{.data[''database-user'']}'
+    name: {{ rdbms_app_name }}
+  stringData:
+    database-name: {{ postgresql_database }}
+    database-password: {{ postgresql_password }}
+    database-user: {{ postgresql_username }}
+
 - kind: DeploymentConfig
   apiVersion: v1
   metadata:
@@ -56,7 +69,7 @@ items:
           execNewPod:
             command: 
             - /bin/bash
-            - /tmp/init-files/wait_for_postgresql.sh
+            - /tmp/init-files/wait_for_rdbms.sh
             - /tmp/init-files/create_databases.sh
             containerName: postgresql
             volumes:

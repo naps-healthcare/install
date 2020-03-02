@@ -21,6 +21,6 @@
     name: patient-service
   vars:
     service_name: "{{ ocp_user }}-patient-service"
-    resources_dir: "{{ resources_base_dir }}/patient-service"
     rdbms_app_name: "{{ service_name }}-{{ rdbms_app_name_base }}"
+    resources_dir: "{{ resources_base_dir }}/patient-service"
   when: install_patient_service|bool

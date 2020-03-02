@@ -8,14 +8,6 @@
     ocp_project_display_name: "{{ app_name }}-{{ ocp_user }}"
     ocp_project_desc: "{{ app_name }}-{{ ocp_user }}"
 
-- name: install openshift_rdbms
-  import_role: 
-    name: openshift_rdbms
-  vars:
-    rdbms_app_name: "{{ ocp_user }}-{{ rdbms_app_name_base }}"
-    resources_dir: "{{ resources_base_dir }}/openshift_rdbms"
-  when: install_rdbms|bool
-
 - name: install optaweb-employee-rostering
   import_role: 
     name: optaweb-employee-rostering
@@ -30,4 +22,5 @@
   vars:
     service_name: "{{ ocp_user }}-patient-service"
     resources_dir: "{{ resources_base_dir }}/patient-service"
+    rdbms_app_name: "{{ service_name }}-{{ rdbms_app_name_base }}"
   when: install_patient_service|bool

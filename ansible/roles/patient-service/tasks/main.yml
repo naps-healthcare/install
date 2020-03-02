@@ -1,5 +1,47 @@
 ---
 
+- name: "Create sa {{ service_name }}"
+  shell: |
+       oc create serviceaccount {{ service_name }} -n {{ ocp_project }}
+       oc policy add-role-to-user view system:serviceaccount:{{ service_name }}:{{ ocp_project }}
+
+
+
+# ###### Patient Service RDBMS      ################
+- name: "Install {{ rdbms_init_configmap }}"
+  shell: |
+       oc create configmap {{ rdbms_init_configmap }} -n {{ ocp_project }} --from-file={{ resources_dir }}/{{ rdbms_app_name_base }}/sql
+  ignore_errors: true
+
+- set_fact:
+    rdbms_template: "{{ rdbms_app_name_base }}_ephemeral.yaml"
+  when: use_ephemeral_rdbms|bool
+
+- name: "Copy {{ rdbms_template }}"
+  template:
+    src: "{{ resources_dir }}/{{ rdbms_app_name_base }}/{{ rdbms_template }}"
+    dest: "{{ work_dir }}/{{ rdbms_template }}"
+
+- name: "Install {{ rdbms_template }}"
+  k8s:
+    state: present
+    namespace: "{{ ocp_project }}"
+    src: "{{ work_dir }}/{{ rdbms_template }}"
+
+- name: wait for rdbms to be ready
+  shell: "{{ openshift_cli }} get dc {{ rdbms_app_name }} -o template --template={{ json_template }} -n {{ ocp_project }}"
+  vars:
+    json_template: '\{\{.status.readyReplicas\}\}'
+  register: result
+  until: result.stdout == "1"
+  retries: 10
+  delay: 30
+  changed_when: false
+
+##############################################
+
+ 
+# #########     Patient Service     ######## #
 - name: "Copy all {{ service_name }} related resources"
   template:
     src: "{{ resources_dir }}/{{ cp_file }}"
@@ -10,3 +52,4 @@
     - patient-service.yml
   loop_control:
     loop_var: cp_file
+##############################################

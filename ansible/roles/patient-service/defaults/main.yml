@@ -1,2 +1,22 @@
 ---
 
+rdbms_template: "{{ rdbms_app_name_base }}_persistent.yml"
+rdbms_init_configmap: "{{ rdbms_app_name }}-cm"
+rdbms_credentials_secret: "{{ rdbms_app_name }}"
+
+postgresql_pv_capacity: 5Gi
+postgresql_version: 9.6
+postgresql_is_namespace: openshift
+postgresql_username: rhpam
+postgresql_password: rhpam
+postgresql_database: rhpam
+postgresql_max_connections: 100
+postgresql_max_prepared_transactions: 100
+postgresql_memory_limit: 512Mi
+
+psql_cpu_request: 250m
+psql_memory_request: 256Mi
+psql_cpu_limit: 500m
+psql_memory_limit: 512Mi
+
+

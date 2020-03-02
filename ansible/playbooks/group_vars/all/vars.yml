@@ -14,7 +14,6 @@ work_dir: "/tmp/{{ app_name }}"
 replica_status: '\{\{.status.readyReplicas\}\}'
 
 user_prefix: user
-rdbms_app_name_base: postgresql
 
 seq_start: 1
 seq_end: 1
@@ -25,3 +24,5 @@ install_optaweb_employee_rostering: True
 
 use_cluster_quota: False
 
+rdbms_app_name_base: postgresql
+use_ephemeral_rdbms: False

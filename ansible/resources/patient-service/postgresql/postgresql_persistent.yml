@@ -12,10 +12,10 @@ items:
       template.openshift.io/expose-uri: postgres://{.spec.clusterIP}:{.spec.ports[?(.name=="postgresql")].port}
     labels:
       app: {{ app_name }}
-      component: {{ rdbms_app_name }}
+      name: {{ rdbms_app_name }}
   spec:
     ports:
-    - name: postgresql
+    - name: {{ rdbms_app_name }}
       protocol: TCP
       port: 5432
       targetPort: 5432
@@ -34,7 +34,7 @@ items:
     name: {{ rdbms_app_name}}
     labels:
       app: {{ app_name }}
-      component: {{ rdbms_app_name }}
+      name: {{ rdbms_app_name }}
   spec:
     accessModes:
     - ReadWriteOnce
@@ -48,7 +48,7 @@ items:
     name: {{ rdbms_app_name }}
     labels:
       app: {{ app_name }}
-      component: {{ rdbms_app_name }}
+      name: {{ rdbms_app_name }}
   spec:
     strategy:
       recreateParams:
@@ -57,7 +57,7 @@ items:
             command: 
             - /bin/bash
             - /tmp/init-files/wait_for_postgresql.sh
-            - /tmp/init-files/create_rhpam_database.sh
+            - /tmp/init-files/create_databases.sh
             containerName: postgresql
             volumes:
             - init-volume
@@ -90,9 +90,9 @@ items:
       metadata:
         labels:
           app: {{ app_name }}
-          component: {{ rdbms_app_name }}
+          name: {{ rdbms_app_name }}
       spec:
-        serviceAccountName: "{{ rdbms_app_name  }}"
+        serviceAccountName: "{{ service_name  }}"
         containers:
         - name: postgresql
           image: " "
@@ -156,7 +156,7 @@ items:
             claimName: "{{ rdbms_app_name }}"
         - configMap:
             defaultMode: 493
-            name: {{ postgresql_init_configmap }}
+            name: {{ rdbms_init_configmap }}
           name: init-volume
         restartPolicy: Always
         dnsPolicy: ClusterFirst

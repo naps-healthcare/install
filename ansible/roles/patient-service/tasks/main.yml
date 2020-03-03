@@ -78,7 +78,7 @@
       loop_var: cp_file
   - name: "Create configmap {{ service_name }}"
     shell: |
-         oc create configmap {{ service_name }} --from-file={{ work_dir }}/application.properties
+         oc create configmap {{ service_name }} --from-file={{ work_dir }}/application.properties -n {{ ocp_project }}
     ignore_errors: true
   - name: "Install patient-service.yml"
     k8s:

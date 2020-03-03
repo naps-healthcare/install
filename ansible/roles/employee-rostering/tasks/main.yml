@@ -70,6 +70,39 @@
     retries: 10
     delay: 30
     changed_when: false
+
   when: backend_pod is not defined or backend_pod is none or backend_pod.resources|length < 1
 
+# ######################################################
+
+
+ 
+# #####         EmpRostering Frontend Service        ######### #
+- k8s_info:
+    kind: Pod
+    label_selectors:
+      - name = {{ frontend_service_name }}
+    namespace: "{{ ocp_project }}"
+  register: frontend_pod
+
+- block:
+  - name: "install {{ frontend_service_name }}"
+    template:
+      src: "{{ resources_dir }}/emprostering-service-frontend.yml"
+      dest: "{{ work_dir }}/emprostering-service-frontend.yml"
+  - k8s:
+      state: present
+      namespace: "{{ ocp_project }}"
+      src: "{{ work_dir }}/emprostering-service-frontend.yml"
+  - name: wait for {{ frontend_service_name }} to be ready
+    shell: "{{ openshift_cli }} get dc {{ frontend_service_name }} -o template --template={{ json_template }} -n {{ ocp_project }}"
+    vars:
+      json_template: '\{\{.status.readyReplicas\}\}'
+    register: result
+    until: result.stdout == "1"
+    retries: 10
+    delay: 30
+    changed_when: false
+
+  when: frontend_pod is not defined or frontend_pod is none or frontend_pod.resources|length < 1
 # ######################################################

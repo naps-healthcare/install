@@ -4,7 +4,7 @@
 
 == Purpose
 
-== Procedure
+== Provisioning Procedure
 
 . Ensure you are authenticated into the OCP4 lab environment as a cluster-admin
 . Clone this repository and execute:
@@ -36,7 +36,28 @@ ansible-playbook -i localhost, -c local playbooks/naps_healthcare_lab_setup.yml 
        -e "ACTION=uninstall"
 -----
 
+
+== optaweb-employee-rostering image build
+
+. git clone https://github.com/naps-healthcare/optaweb-employee-rostering.git
+. cd optaweb-employee-rostering
+. git checkout naps_himss
+. mvn clean install -DskipTests
+
+. Create backend image:
++
+-----
 podman build --rm \
              -t quay.io/naps_healthcare/employee-rostering-backend:7.32.1.Final \
              -f employee-rostering-backend/Dockerfile \
              employee-rostering-backend
+-----
+
+. Create frontend image:
++
+-----
+podman build --rm \
+             -t quay.io/naps_healthcare/employee-rostering-frontend:7.32.2.Final \
+             -f employee-rostering-frontend/docker/Dockerfile \
+             employee-rostering-frontend/docker
+-----

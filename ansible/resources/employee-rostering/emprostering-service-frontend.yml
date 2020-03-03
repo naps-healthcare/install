@@ -8,15 +8,15 @@ items:
   metadata:
     labels:
       app: {{ app_name }}
-      name: {{ backend_service_name }}
-    name: {{ backend_service_name }}
+      name: {{ frontend_service_name }}
+    name: {{ frontend_service_name }}
   spec:
     port:
       targetPort: 8080-tcp
     subdomain: ""
     to:
       kind: Service
-      name: {{ backend_service_name }}
+      name: {{ frontend_service_name }}
       weight: 100
     wildcardPolicy: None
 
@@ -25,8 +25,8 @@ items:
   metadata:
     labels:
       app: {{ app_name }}
-      name: {{ backend_service_name }}
-    name: {{ backend_service_name }}
+      name: {{ frontend_service_name }}
+    name: {{ frontend_service_name }}
   spec:
     ports:
     - name: 8080-tcp
@@ -35,29 +35,7 @@ items:
       targetPort: 8080
     selector:
       app: {{ app_name }}
-      name: {{ backend_service_name }}
-    sessionAffinity: None
-    type: ClusterIP
-
-# Frontend is hardcoded in its /etc/nginx/conf.d/default.conf file to invoke a service called:  backend
-# Nginx conf files can't easily use environment variables
-# Subsequently, create an additional service to backend with hardcoded name: backend
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: {{ app_name }}
-      name: {{ backend_service_name }}
-    name: backend
-  spec:
-    ports:
-    - name: 8080-tcp
-      port: 8080
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      app: {{ app_name }}
-      name: {{ backend_service_name }}
+      name: {{ frontend_service_name }}
     sessionAffinity: None
     type: ClusterIP
 
@@ -65,10 +43,10 @@ items:
   kind: ImageStream
   metadata:
     labels:
-      build: {{ backend_service_name }}
-    name: {{ backend_service_name }}
+      build: {{ frontend_service_name }}
+    name: {{ frontend_service_name }}
   spec:
-      dockerImageRepository: {{ emprostering_backend_is_host }}
+      dockerImageRepository: {{ emprostering_frontend_is_host }}
 
 - apiVersion: apps.openshift.io/v1
   kind: DeploymentConfig
@@ -76,14 +54,14 @@ items:
     annotations:
     labels:
       app: {{ app_name }}
-      name: {{ backend_service_name }}
-    name: {{ backend_service_name }}
+      name: {{ frontend_service_name }}
+    name: {{ frontend_service_name }}
   spec:
     replicas: 1
     revisionHistoryLimit: 10
     selector:
       app: {{ app_name }}
-      name: {{ backend_service_name }}
+      name: {{ frontend_service_name }}
     strategy:
       activeDeadlineSeconds: 21600
       resources: {}
@@ -98,41 +76,24 @@ items:
       metadata:
         labels:
           app: {{ app_name }}
-          name: {{ backend_service_name }}
-          deploymentconfig: {{ backend_service_name }}
+          name: {{ frontend_service_name }}
+          deploymentconfig: {{ frontend_service_name }}
       spec:
         containers:
           - env:
-            - name: DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  key: database-name
-                  name: {{ rdbms_app_name }}
-            - name: DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: database-password
-                  name: {{ rdbms_app_name }}
-            - name: DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  key: database-user
-                  name: {{ rdbms_app_name }}
-            - name: DATABASE_SERVICE_NAME
-              value: {{ rdbms_app_name }}
+            - name: REACT_APP_BACKEND_URL
+              value: http://{{ backend_service_name }}:8080
             imagePullPolicy: IfNotPresent
-            name: {{ backend_service_name }}
+            name: {{ frontend_service_name }}
             ports:
-              - containerPort: 9779
-                protocol: TCP
               - containerPort: 8080
                 protocol: TCP
-              - containerPort: 8778
+              - containerPort: 80
                 protocol: TCP
             resources:
               limits:
                 cpu: '500m'
-                memory: '500Mi'
+                memory: '1Gi'
               requests:
                 cpu: '250m'
                 memory: '250Mi'
@@ -152,10 +113,10 @@ items:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - {{ backend_service_name }}
+        - {{ frontend_service_name }}
         from:
           kind: ImageStreamTag
-          name: {{ backend_service_name }}:{{ emprostering_backend_is_tag }}
+          name: {{ frontend_service_name }}:{{ emprostering_frontend_is_tag }}
           namespace: {{ ocp_project }}
       type: ImageChange
 

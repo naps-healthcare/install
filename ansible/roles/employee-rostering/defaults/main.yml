@@ -1,0 +1,11 @@
+---
+
+optascheduling_db_name: optarostering
+optascheduling_db_username: jboss
+optascheduling_db_password: jboss
+
+emprostering_source_url: https://github.com/naps-healthcare/optaweb-employee-rostering.git
+emprostering_source_branch: naps_himss
+
+emprostering_backend_is_host: quay.io/naps_healthcare/employee-rostering-backend
+emprostering_backend_is_tag: 7.32.1.Final

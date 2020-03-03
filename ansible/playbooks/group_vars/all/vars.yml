@@ -20,7 +20,7 @@ seq_end: 1
 
 install_rdbms: True
 install_patient_service: True
-install_optaweb_employee_rostering: True
+install_employee_rostering: True
 
 use_cluster_quota: False
 

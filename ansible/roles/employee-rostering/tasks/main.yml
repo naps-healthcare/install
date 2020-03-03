@@ -1,0 +1,75 @@
+---
+
+# #####         EmpRostering Database       ######### #
+- k8s_info:
+    kind: Pod
+    label_selectors:
+      - app = {{ rdbms_app_name }}
+    namespace: "{{ ocp_project }}"
+  register: emproster_db
+
+- block:
+  - name: "Install {{ rdbms_app_name }}"
+    shell: |
+        oc new-app --name {{ rdbms_app_name }} \
+           -p DATABASE_SERVICE_NAME={{ rdbms_app_name }} \
+           -p POSTGRESQL_DATABASE={{ optascheduling_db_name }} \
+           -p POSTGRESQL_USER={{ optascheduling_db_username }} \
+           -p POSTGRESQL_PASSWORD={{ optascheduling_db_password }} \
+           -n {{ ocp_project }} \
+           postgresql-persistent
+
+  - name: wait for rdbms to be ready
+    shell: "{{ openshift_cli }} get dc {{ rdbms_app_name }} -o template --template={{ json_template }} -n {{ ocp_project }}"
+    vars:
+      json_template: '\{\{.status.readyReplicas\}\}'
+    register: result
+    until: result.stdout == "1"
+    retries: 10
+    delay: 30
+    changed_when: false
+
+  when: emproster_db is not defined or emproster_db is none or emproster_db.resources|length < 1
+#######################################################
+
+
+
+# ######            Employee Rostering SA       ############# #
+- name: "Create sa {{ service_name }}"
+  shell: |
+       oc create serviceaccount {{ service_name }} -n {{ ocp_project }}
+       oc policy add-role-to-user view system:serviceaccount:{{ service_name }}:{{ ocp_project }}
+# #############################################################
+
+
+
+
+# #####         EmpRostering Backend Service        ######### #
+- k8s_info:
+    kind: Pod
+    label_selectors:
+      - name = {{ backend_service_name }}
+    namespace: "{{ ocp_project }}"
+  register: backend_pod
+
+- block:
+  - name: "install {{ backend_service_name }}"
+    template:
+      src: "{{ resources_dir }}/emprostering-service-backend.yml"
+      dest: "{{ work_dir }}/emprostering-service-backend.yml"
+  - k8s:
+      state: present
+      namespace: "{{ ocp_project }}"
+      src: "{{ work_dir }}/emprostering-service-backend.yml"
+  - name: wait for {{ backend_service_name }} to be ready
+    shell: "{{ openshift_cli }} get dc {{ backend_service_name }} -o template --template={{ json_template }} -n {{ ocp_project }}"
+    vars:
+      json_template: '\{\{.status.readyReplicas\}\}'
+    register: result
+    until: result.stdout == "1"
+    retries: 10
+    delay: 30
+    changed_when: false
+  when: backend_pod is not defined or backend_pod is none or backend_pod.resources|length < 1
+
+# ######################################################

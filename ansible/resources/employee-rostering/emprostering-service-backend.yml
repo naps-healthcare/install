@@ -1,0 +1,142 @@
+---
+kind: List
+apiVersion: v1
+items:
+
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    labels:
+      app: {{ app_name }}
+      name: {{ backend_service_name }}
+    name: {{ backend_service_name }}
+  spec:
+    port:
+      targetPort: 8080-tcp
+    subdomain: ""
+    to:
+      kind: Service
+      name: {{ backend_service_name }}
+      weight: 100
+    wildcardPolicy: None
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: {{ app_name }}
+      name: {{ backend_service_name }}
+    name: {{ backend_service_name }}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: {{ app_name }}
+      name: {{ backend_service_name }}
+    sessionAffinity: None
+    type: ClusterIP
+
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    labels:
+      build: {{ backend_service_name }}
+    name: {{ backend_service_name }}
+  spec:
+      dockerImageRepository: {{ emprostering_backend_is_host }}
+
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+    labels:
+      app: {{ app_name }}
+      name: {{ backend_service_name }}
+    name: {{ backend_service_name }}
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      app: {{ app_name }}
+      name: {{ backend_service_name }}
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: {{ app_name }}
+          name: {{ backend_service_name }}
+          deploymentconfig: {{ backend_service_name }}
+      spec:
+        containers:
+          - env:
+            - name: DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: database-name
+                  name: {{ rdbms_app_name }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-password
+                  name: {{ rdbms_app_name }}
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  key: database-user
+                  name: {{ rdbms_app_name }}
+            - name: DATABASE_SERVICE_NAME
+              value: {{ rdbms_app_name }}
+            imagePullPolicy: IfNotPresent
+            name: {{ backend_service_name }}
+            ports:
+              - containerPort: 9779
+                protocol: TCP
+              - containerPort: 8080
+                protocol: TCP
+              - containerPort: 8778
+                protocol: TCP
+            resources:
+              limits:
+                cpu: '500m'
+                memory: '500Mi'
+              requests:
+                cpu: '250m'
+                memory: '250Mi'
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            volumeMounts: []
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: {{ service_name }}
+        serviceAccountName: {{ service_name }}
+        terminationGracePeriodSeconds: 30
+        volumes: []
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - {{ backend_service_name }}
+        from:
+          kind: ImageStreamTag
+          name: {{ backend_service_name }}:{{ emprostering_backend_is_tag }}
+          namespace: {{ ocp_project }}
+      type: ImageChange
+
+
+
+

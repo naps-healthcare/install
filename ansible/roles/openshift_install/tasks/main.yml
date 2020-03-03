@@ -8,13 +8,16 @@
     ocp_project_display_name: "{{ app_name }}-{{ ocp_user }}"
     ocp_project_desc: "{{ app_name }}-{{ ocp_user }}"
 
-- name: install optaweb-employee-rostering
+- name: install employee-rostering
   import_role: 
-    name: optaweb-employee-rostering
+    name: employee-rostering
   vars:
-    service_name: "{{ ocp_user }}-postgresql"
-    resources_dir: "{{ resources_base_dir }}/optaweb-employee-rostering"
-  when: install_optaweb_employee_rostering|bool
+    service_name: "{{ ocp_user }}-emprostering"
+    backend_service_name: "{{ service_name }}-backend"
+    frontend_service_name: "{{ service_name }}-frontend"
+    rdbms_app_name: "{{ service_name }}-postgresql"
+    resources_dir: "{{ resources_base_dir }}/employee-rostering"
+  when: install_employee_rostering|bool
 
 - name: install patient-service
   import_role: 
@@ -24,3 +27,18 @@
     rdbms_app_name: "{{ service_name }}-{{ rdbms_app_name_base }}"
     resources_dir: "{{ resources_base_dir }}/patient-service"
   when: install_patient_service|bool
+
+- name: Clean dead pods
+  k8s_info:
+    namespace: "{{ ocp_project }}"
+    kind: Pod
+    field_selectors:
+      - status.phase=Succeeded
+  register: dpods
+- shell: |
+       oc delete pod {{ deadpod }} -n {{ ocp_project }}
+  loop: "{{ dpods.resources| json_query('[*].metadata.name') }}"
+  loop_control:
+    loop_var: deadpod
+   
+

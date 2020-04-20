@@ -4,12 +4,15 @@
 - k8s_info:
     kind: Pod
     label_selectors:
-      - app = {{ rdbms_app_name }}
+      - name = {{ rdbms_app_name }}
     namespace: "{{ ocp_project }}"
   register: emproster_db
 
+#- debug:
+#    msg: "emproster_db = {{ emproster_db }}"
+
 - block:
-  - name: "Install {{ rdbms_app_name }}"
+  - name: "Install {{ rdbms_app_name }} in {{ ocp_project }}"
     shell: |
         oc new-app --name {{ rdbms_app_name }} \
            -p DATABASE_SERVICE_NAME={{ rdbms_app_name }} \

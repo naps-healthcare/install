@@ -118,8 +118,10 @@ items:
                 secretKeyRef:
                   key: database-user
                   name: {{ rdbms_app_name }}
-            - name: DATABASE_SERVICE_NAME
+            - name: DATABASE_HOST
               value: {{ rdbms_app_name }}
+            - name: SPRING_PROFILES_ACTIVE
+              value: production
             imagePullPolicy: IfNotPresent
             name: {{ backend_service_name }}
             ports:

@@ -12,12 +12,6 @@
 -----
 cd ansible
 
-export api_mgmt_subdomain_base=$(oc whoami --show-console | cut -d'.' -f 3-)                        # subdomain base where 3scale API gateways reside.
-                                                                                                    # most likely will be the same cluster that ER-Demo is on
-                                                                                                    # ie: cluster-168d.168d.example.opentlc.com
-
-export create_incident_service_api_resources=true                                                   # Please see comments in playbooks/group_vars/all/vars.yml
-
 seq_start=1
 seq_end=1
 
@@ -48,16 +42,16 @@ ansible-playbook -i localhost, -c local playbooks/naps_healthcare_lab_setup.yml 
 +
 -----
 podman build --rm \
-             -t quay.io/naps_healthcare/employee-rostering-backend:7.32.1.Final \
-             -f employee-rostering-backend/Dockerfile \
-             employee-rostering-backend
+             -t quay.io/naps_healthcare/employee-rostering-backend:covid-7.36.0.Final.1 \
+             -f optaweb-employee-rostering-backend/Dockerfile \
+             optaweb-employee-rostering-backend
 -----
 
 . Create frontend image:
 +
 -----
 podman build --rm \
-             -t quay.io/naps_healthcare/employee-rostering-frontend:7.32.2.Final \
-             -f employee-rostering-frontend/docker/Dockerfile \
-             employee-rostering-frontend/docker
+             -t quay.io/naps_healthcare/employee-rostering-frontend:covid-7.36.0.Final.0 \
+             -f optaweb-employee-rostering-frontend/docker/Dockerfile \
+             optaweb-employee-rostering-frontend/docker
 -----

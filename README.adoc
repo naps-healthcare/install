@@ -35,7 +35,7 @@ ansible-playbook -i localhost, -c local playbooks/naps_healthcare_lab_setup.yml 
 
 . git clone https://github.com/naps-healthcare/optaweb-employee-rostering.git
 . cd optaweb-employee-rostering
-. git checkout naps_himss
+. git checkout covid-19-naps
 . mvn clean install -DskipTests
 
 . Create backend image:
@@ -51,7 +51,7 @@ podman build --rm \
 +
 -----
 podman build --rm \
-             -t quay.io/naps_healthcare/employee-rostering-frontend:covid-7.36.0.Final.0 \
+             -t quay.io/naps_healthcare/employee-rostering-frontend:covid-7.36.0.Final.1 \
              -f optaweb-employee-rostering-frontend/docker/Dockerfile \
              optaweb-employee-rostering-frontend/docker
 -----

@@ -65,7 +65,7 @@ items:
   kind: ImageStream
   metadata:
     labels:
-      build: {{ backend_service_name }}
+      name: {{ backend_service_name }}
     name: {{ backend_service_name }}
   spec:
       dockerImageRepository: {{ emprostering_backend_is_host }}

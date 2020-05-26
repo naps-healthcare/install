@@ -5,6 +5,6 @@ optascheduling_db_username: jboss
 optascheduling_db_password: jboss
 
 emprostering_backend_is_host: quay.io/naps_healthcare/employee-rostering-backend
-emprostering_backend_is_tag: covid-7.36.0.Final.4
+emprostering_backend_is_tag: covid-7.37.0.Final
 emprostering_frontend_is_host: quay.io/naps_healthcare/employee-rostering-frontend
-emprostering_frontend_is_tag: covid-7.36.0.Final.1
+emprostering_frontend_is_tag: covid-7.37.0.Final

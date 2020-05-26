@@ -42,16 +42,20 @@ ansible-playbook -i localhost, -c local playbooks/naps_healthcare_lab_setup.yml 
 +
 -----
 podman build --rm \
-             -t quay.io/naps_healthcare/employee-rostering-backend:covid-7.36.0.Final.1 \
+             -t quay.io/naps_healthcare/employee-rostering-backend:covid-7.37.0.Final \
              -f optaweb-employee-rostering-backend/Dockerfile \
              optaweb-employee-rostering-backend
+
+podman push quay.io/naps_healthcare/employee-rostering-backend:covid-7.37.0.Final
 -----
 
 . Create frontend image:
 +
 -----
 podman build --rm \
-             -t quay.io/naps_healthcare/employee-rostering-frontend:covid-7.36.0.Final.1 \
+             -t quay.io/naps_healthcare/employee-rostering-frontend:covid-7.37.0.Final \
              -f optaweb-employee-rostering-frontend/docker/Dockerfile \
              optaweb-employee-rostering-frontend/docker
+
+podman push quay.io/naps_healthcare/employee-rostering-frontend:covid-7.37.0.Final
 -----

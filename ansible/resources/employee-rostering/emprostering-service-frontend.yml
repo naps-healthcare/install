@@ -43,7 +43,7 @@ items:
   kind: ImageStream
   metadata:
     labels:
-      build: {{ frontend_service_name }}
+      name: {{ frontend_service_name }}
     name: {{ frontend_service_name }}
   spec:
       dockerImageRepository: {{ emprostering_frontend_is_host }}
